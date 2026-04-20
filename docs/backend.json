@@ -1,0 +1,202 @@
+{
+  "entities": {
+    "Game": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Game",
+      "type": "object",
+      "description": "Represents a single instance of a real-time multiplayer board game.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Game entity."
+        },
+        "whitePlayerId": {
+          "type": "string",
+          "description": "Reference to the UserProfile playing as the white pieces. (Relationship: UserProfile 1:N Game)"
+        },
+        "blackPlayerId": {
+          "type": "string",
+          "description": "Reference to the UserProfile playing as the black pieces. (Relationship: UserProfile 1:N Game)"
+        },
+        "boardState": {
+          "type": "array",
+          "description": "The current 8x8 board grid state. Each inner array represents a row, and numbers within represent pieces (e.g., 0 for empty, 1 for white piece, 2 for black piece).",
+          "items": {
+            "type": "number"
+          }
+        },
+        "currentTurn": {
+          "type": "string",
+          "description": "Indicates whose turn it is to move ('white' or 'black')."
+        },
+        "status": {
+          "type": "string",
+          "description": "Current state of the game ('waiting', 'playing', 'finished')."
+        },
+        "whitePlayerClockRemaining": {
+          "type": "number",
+          "description": "Remaining time for the white player in milliseconds."
+        },
+        "blackPlayerClockRemaining": {
+          "type": "number",
+          "description": "Remaining time for the black player in milliseconds."
+        },
+        "moveHistory": {
+          "type": "array",
+          "description": "A chronological list of moves made in the game, each represented as a string.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the game was created.",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "type": "string",
+          "description": "Timestamp when the game concluded.",
+          "format": "date-time"
+        },
+        "winnerPlayerId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who won the game, if applicable. (Relationship: UserProfile 1:N Game)"
+        }
+      },
+      "required": [
+        "id",
+        "whitePlayerId",
+        "blackPlayerId",
+        "boardState",
+        "currentTurn",
+        "status",
+        "whitePlayerClockRemaining",
+        "blackPlayerClockRemaining",
+        "moveHistory",
+        "createdAt"
+      ]
+    },
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Stores user-specific display information not handled by the external authentication system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity, corresponding to the Firebase Authentication userId."
+        },
+        "username": {
+          "type": "string",
+          "description": "The public display name for the user."
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "URL to the user's avatar image.",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user profile was created.",
+          "format": "date-time"
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "description": "Timestamp of the user's last login.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "createdAt",
+        "lastLoginAt"
+      ]
+    },
+    "MatchmakingEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MatchmakingEntry",
+      "type": "object",
+      "description": "Represents a player waiting to be matched with another player for a new game.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MatchmakingEntry entity."
+        },
+        "playerId": {
+          "type": "string",
+          "description": "Reference to the UserProfile who joined the matchmaking queue. (Relationship: UserProfile 1:N MatchmakingEntry)"
+        },
+        "joinedAt": {
+          "type": "string",
+          "description": "Timestamp when the player joined the matchmaking queue.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "playerId",
+        "joinedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/user_profiles/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores individual user profiles. Each document ID (`userId`) directly corresponds to the Firebase Authentication UID, enforcing path-based ownership. Read access for `username` and `avatarUrl` may be public, but write access is restricted to the owning user. Includes denormalized 'id' field matching the document ID for self-reference.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/games/{gameId}",
+        "definition": {
+          "entityName": "Game",
+          "schema": {
+            "$ref": "#/backend/entities/Game"
+          },
+          "description": "Stores the state of individual multiplayer game instances. Access is restricted to the two players involved in the game. Includes denormalized 'whitePlayerId' and 'blackPlayerId' for authorization independence, allowing direct checks in security rules without 'get()' operations. Client-side updates to sensitive fields like 'boardState' are forbidden and must pass through a Cloud Function for server-side validation.",
+          "params": [
+            {
+              "name": "gameId",
+              "description": "The unique identifier for a specific game instance."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/matchmaking_entries/{entryId}",
+        "definition": {
+          "entityName": "MatchmakingEntry",
+          "schema": {
+            "$ref": "#/backend/entities/MatchmakingEntry"
+          },
+          "description": "Manages individual entries in the matchmaking queue. Each document represents a player waiting for a game. Includes denormalized 'playerId' for authorization independence, ensuring only the owner can manage their entry.",
+          "params": [
+            {
+              "name": "entryId",
+              "description": "The unique identifier for a matchmaking queue entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure for 'Tactile Nexus' is designed to prioritize security, scalability, and debuggability in alignment with the core design principles. \n\n**Authorization Independence (CRITICAL):**\n*   **Game Collection (`/games/{gameId}`):** Authorization for game documents is achieved through denormalization. Each `Game` document explicitly includes `whitePlayerId` and `blackPlayerId` fields. This eliminates the need for `get()` calls in security rules to retrieve player information from separate user profiles or parent documents. Rules can directly check `request.auth.uid == resource.data.whitePlayerId || request.auth.uid == resource.data.blackPlayerId`, ensuring atomic operations and simplified rule logic. This makes it impossible for a game's authorization to break due to a missing parent document or complex hierarchical lookups.\n*   **UserProfile Collection (`/user_profiles/{userId}`):** Authorization is inherently independent as access is based on the `userId` parameter in the path matching `request.auth.uid`. No external lookups are needed.\n*   **MatchmakingEntry Collection (`/matchmaking_entries/{entryId}`):** Each entry explicitly contains the `playerId` field. Rules can directly compare `request.auth.uid == resource.data.playerId`, ensuring authorization independence.\n\n**QAPs (Rules are not Filters):**\n*   **Structural Segregation:** Each collection (`/user_profiles`, `/games`, `/matchmaking_entries`) maintains a homogeneous security posture, making `list` operations (Queries with Authorization Predicates) straightforward.\n    *   `user_profiles`: Users can query their own profile (`where('id', '==', request.auth.uid)`) or potentially public user profiles (if allowed, filtered by public fields, though full public `list` of all profiles is generally avoided for privacy/performance). The path-based ownership simplifies individual document access.\n    *   `games`: A user can query for games they are a part of by using `where('whitePlayerId', '==', request.auth.uid)` or `where('blackPlayerId', '==', request.auth.uid)`. Because the player IDs are denormalized into *every* game document, the security rules can effectively enforce that `list` operations only return documents where the `request.auth.uid` is one of the players. This satisfies QAPs as the rules can match the query filters directly.\n    *   `matchmaking_entries`: A user can only create/delete their own entry. Listing all entries might be allowed for the matchmaking service itself (Cloud Function), but a client-side `list` would typically filter for specific criteria, or simply display their own entry status, which is easily secured by checking `playerId == request.auth.uid`.\n\n**Clarity of Intent (Debuggability):** The chosen paths and document fields (e.g., `whitePlayerId`, `blackPlayerId`, `playerId`, `status`) explicitly convey the purpose and access requirements of the data, simplifying rule creation and debugging. The `status` field in `Game` clearly defines the finite state machine for a game instance.\n\n**DBAC (No Custom Claims):** All roles (implicit player roles) are stored directly within the database documents (e.g., `whitePlayerId`, `blackPlayerId`), relying solely on `request.auth.uid` for authorization checks.\n\n**Invariants:** The structure supports data integrity by explicitly storing ownership (`playerId`, `whitePlayerId`, `blackPlayerId`), timestamps (`createdAt`, `lastLoginAt`, `joinedAt`), and game state (`boardState`, `currentTurn`, `status`) within the respective documents. The client-side restriction on updating `boardState` directly (requiring a Cloud Function) further ensures data integrity and prevents cheating."
+  }
+}

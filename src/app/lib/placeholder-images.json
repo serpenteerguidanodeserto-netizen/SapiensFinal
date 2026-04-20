@@ -1,0 +1,23 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "avatar-white",
+      "description": "Minimalist avatar for white player",
+      "imageUrl": "https://picsum.photos/seed/white-player/128/128",
+      "imageHint": "minimalist avatar"
+    },
+    {
+      "id": "avatar-black",
+      "description": "Minimalist avatar for black player",
+      "imageUrl": "https://picsum.photos/seed/black-player/128/128",
+      "imageHint": "minimalist portrait"
+    },
+    {
+      "id": "hero-game",
+      "description": "Abstract board game strategy",
+      "imageUrl": "https://picsum.photos/seed/strategy/1200/800",
+      "imageHint": "strategy board"
+    }
+  ]
+}

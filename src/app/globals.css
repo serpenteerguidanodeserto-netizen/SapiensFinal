@@ -1,0 +1,46 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 95%; /* #F3F3F3 */
+    --foreground: 0 0% 16%; /* #2A2A2A */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 16%;
+    --primary: 98 24% 39%; /* #5F7D4D - Olive Green */
+    --primary-foreground: 49 20% 88%; /* #E8E6D8 - Soft Beige */
+    --secondary: 49 20% 88%; /* #E8E6D8 - Soft Beige */
+    --secondary-foreground: 98 24% 39%; /* #5F7D4D */
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 49 20% 88%;
+    --accent-foreground: 98 24% 39%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 98 24% 39%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+}
+
+.board-shadow {
+  box-shadow: 0 10px 50px -12px rgba(95, 125, 77, 0.25);
+}
+
+.piece-move-animation {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
